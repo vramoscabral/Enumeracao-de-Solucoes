@@ -43,7 +43,7 @@ bool existe(int* C_N, int j, int n, int m) {
 //função que calcula solução por solução (se houver)
 pair<int, int> phase1simplex(string comb, int* C, int**A, int* b, int n, int m) {
     int* C_N = new int[n-m];
-    int i=0, valor;
+    int i=0, j, valor;
     stringstream ss(comb);
     string item;
     //Vetor coeficientes não básicos
@@ -61,14 +61,43 @@ pair<int, int> phase1simplex(string comb, int* C, int**A, int* b, int n, int m) 
             vcb++;
         }
     }
-    cout << "C_N = [";
-    for (i=0; i<n-m-1; i++)
-        cout << C_N[i] << " ";
-    cout << C_N[n-m-1] << "] \n";
-    cout << "C_B = [";
-    for (i=0; i<m-1; i++)
-        cout << C_B[i] << " ";
-    cout << C_B[m-1] << "] \n";
+    //matriz básica
+    int** Bas = new int*[m];
+    for (i=0; i<m; i++) {
+        Bas[i] = new int[m];
+    }
+    for (i=0; i<m; i++) {
+        for (j=0; j<m; j++) {
+            Bas[j][i] = A[j][C_B[i]];
+        }
+    }
+    //matriz nao básica
+    int** Nbas = new int*[m];
+    for (i=0; i<m; i++) {
+        Nbas[i] = new int[n-m];
+    }
+    for (i=0; i<n-m; i++) {
+        for (j=0; j<m; j++) {
+            Nbas[j][i] = A[j][C_N[i]];
+        }
+    }
+
+    cout << "Bas = " << endl; "[";
+    for (i=0; i<m; i++) {
+        for (j=0; j<m; j++) {
+            cout << Bas[i][j] << " ";
+        }
+        cout << endl;
+    }
+    cout << "] \n";
+    cout << "Nbas = " << endl; "[";
+    for (i=0; i<m; i++) {
+        for (j=0; j<n-m; j++) {
+            cout << Nbas[i][j] << " ";
+        }
+        cout << endl;
+    }
+    cout << "] \n";
 
     int solucao, resultado;
     return make_pair(solucao, resultado);
@@ -89,10 +118,6 @@ int main() {
         leitor >> r;
         C[i] = r;
     }
-    for (i=0; i<n; i++) {
-        cout << C[i] << " ";
-    }
-    cout << endl;
 
     //leitura e armazenamento das restrições e seus valores
     int** A = new int*[m]; // matriz A (Ax = B)
@@ -107,12 +132,6 @@ int main() {
         }
         leitor >> r;
         b[i] = r;
-    }
-    for (i=0; i<m; i++) {
-        for (j=0; j<n; j++) {
-            cout << A[i][j] << " ";
-        }
-        cout << b[i] << "\n";
     }
 
     leitor.close();
