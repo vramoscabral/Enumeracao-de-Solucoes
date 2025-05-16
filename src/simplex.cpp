@@ -40,6 +40,72 @@ bool existe(int* C_N, int j, int n, int m) {
     return false;
 }
 
+#include <iostream>
+#include <vector>
+
+#include <vector>
+#include <algorithm>
+using namespace std;
+
+vector<int> solvesystem(int** mat, int m) {
+    // Escalonamento
+    for (int k = 0; k < m; k++) {
+        // Trocar linha se pivô for zero
+        if (mat[k][k] == 0) {
+            bool trocou = false;
+            for (int i = k + 1; i < m; i++) {
+                if (mat[i][k] != 0) {
+                    swap(mat[k], mat[i]);
+                    trocou = true;
+                    break;
+                }
+            }
+            if (!trocou) continue; // pivô continua zero
+        }
+
+        // Eliminar elementos abaixo do pivô
+        for (int i = k + 1; i < m; i++) {
+            if (mat[i][k] == 0) continue;
+            int fator = mat[i][k] / mat[k][k];
+            for (int j = k; j <= m; j++) {
+                mat[i][j] -= fator * mat[k][j];
+            }
+        }
+    }
+
+    // Verificar inconsistências do tipo 0 0 0 ... | c (c ≠ 0)
+    for (int i = 0; i < m; i++) {
+        bool todos_zeros = true;
+        for (int j = 0; j < m; j++) {
+            if (mat[i][j] != 0) {
+                todos_zeros = false;
+                break;
+            }
+        }
+        if (todos_zeros && mat[i][m] != 0) {
+            return {-1}; // sistema impossivel
+        }
+    }
+
+    // Substituição retroativa
+    vector<int> X(m);
+    for (int i = m - 1; i >= 0; i--) {
+        int soma = 0;
+        for (int j = i + 1; j < m; j++) {
+            soma += mat[i][j] * X[j];
+        }
+
+        if (mat[i][i] == 0) {
+            return {-1}; // divisão por zero, variável indefinida
+        }
+
+        X[i] = (mat[i][m] - soma) / mat[i][i];  // assume divisível
+    }
+
+    return X;
+}
+
+
 //função que calcula solução por solução (se houver)
 pair<int, int> phase1simplex(string comb, int* C, int**A, int* b, int n, int m) {
     int* C_N = new int[n-m];
@@ -82,22 +148,20 @@ pair<int, int> phase1simplex(string comb, int* C, int**A, int* b, int n, int m) 
         }
     }
 
-    cout << "Bas = " << endl; "[";
+    // fórmula B*X_b = b
+    int** s_to_solve = new int*[m];
+    for (i=0; i<m; i++) {
+        s_to_solve[i] = new int[m+1];
+    }
     for (i=0; i<m; i++) {
         for (j=0; j<m; j++) {
-            cout << Bas[i][j] << " ";
+            s_to_solve[i][j] = Bas[i][j];
         }
-        cout << endl;
+        s_to_solve[i][j] = b[i];
     }
-    cout << "] \n";
-    cout << "Nbas = " << endl; "[";
-    for (i=0; i<m; i++) {
-        for (j=0; j<n-m; j++) {
-            cout << Nbas[i][j] << " ";
-        }
-        cout << endl;
-    }
-    cout << "] \n";
+    vector<int> X_b = solvesystem(s_to_solve,m);
+    for (auto i : X_b)
+        cout << i << "," << endl;
 
     int solucao, resultado;
     return make_pair(solucao, resultado);
@@ -138,7 +202,7 @@ int main() {
 
     vector<string> c = combinacoes(n,m);
     pair<int, int> par;
-    par = phase1simplex(c[0],C,A,b,n,m);
+    par = phase1simplex(c[3],C,A,b,n,m);
     /*int solt=0, solv=0, soln=0; // solucoes totais, solucoes validas, e nao validas
     pair<int, int> par;
     for (i=0; i<nqnt; i++) {
