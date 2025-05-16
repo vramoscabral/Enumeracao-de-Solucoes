@@ -47,7 +47,12 @@ bool existe(int* C_N, int j, int n, int m) {
 #include <algorithm>
 using namespace std;
 
-vector<int> solvesystem(int** mat, int m) {
+#include <vector>
+#include <utility>
+#include <algorithm>
+using namespace std;
+
+pair<bool, vector<int>> solvesystem(int** mat, int m) {
     // Escalonamento
     for (int k = 0; k < m; k++) {
         // Trocar linha se pivô for zero
@@ -73,7 +78,7 @@ vector<int> solvesystem(int** mat, int m) {
         }
     }
 
-    // Verificar inconsistências do tipo 0 0 0 ... | c (c ≠ 0)
+    // Verificar inconsistência do tipo: 0 0 0 ... | c (c ≠ 0)
     for (int i = 0; i < m; i++) {
         bool todos_zeros = true;
         for (int j = 0; j < m; j++) {
@@ -83,7 +88,7 @@ vector<int> solvesystem(int** mat, int m) {
             }
         }
         if (todos_zeros && mat[i][m] != 0) {
-            return {-1}; // sistema impossivel
+            return {false, {-1}};
         }
     }
 
@@ -96,18 +101,24 @@ vector<int> solvesystem(int** mat, int m) {
         }
 
         if (mat[i][i] == 0) {
-            return {-1}; // divisão por zero, variável indefinida
+            return {false, {-1}};
         }
 
-        X[i] = (mat[i][m] - soma) / mat[i][i];  // assume divisível
+        X[i] = (mat[i][m] - soma) / mat[i][i];  // assume divisão exata
     }
 
-    return X;
+    return {true, X};
 }
 
+int viable(vector<int> X) {
+    for (auto i : X) {
+        if (i < 0) return -1;
+    }
+    return 1;
+}
 
 //função que calcula solução por solução (se houver)
-pair<int, int> phase1simplex(string comb, int* C, int**A, int* b, int n, int m) {
+pair<int, vector<int>> phase1simplex(string comb, int* C, int**A, int* b, int n, int m) {
     int* C_N = new int[n-m];
     int i=0, j, valor;
     stringstream ss(comb);
@@ -159,12 +170,34 @@ pair<int, int> phase1simplex(string comb, int* C, int**A, int* b, int n, int m) 
         }
         s_to_solve[i][j] = b[i];
     }
-    vector<int> X_b = solvesystem(s_to_solve,m);
-    for (auto i : X_b)
-        cout << i << "," << endl;
-
-    int solucao, resultado;
-    return make_pair(solucao, resultado);
+    pair<bool, vector<int>> pbi = solvesystem(s_to_solve,m);
+    vector<int> X_b = pbi.second;
+    int solucao = viable(X_b), resultado=0;
+    if (!pbi.first)
+        return make_pair(0,X_b);
+    else {
+        //saida x = [x1, x2, ...]
+        vector<int> Xs;
+        int bval=0;
+        cout << "x = [";
+        // coloca os valores das variaveis num vetor
+        //ex: Xs = [ 0 0 4 2 3 ]
+        for (i=0; i<n; i++) {
+            if (i == C_B[bval]) {
+                Xs.push_back(X_b[bval]);
+                bval++;
+            }
+            else Xs.push_back(0);
+            if (i<n-1) cout << Xs[i] << ", ";
+            else cout << Xs[i] << "]\n";
+        }
+        // soluciona a equacao principal
+        for (i=0; i<n; i++) {
+            resultado += C[i]*Xs[i];
+        }
+        Xs.push_back(resultado);
+        return make_pair(solucao, Xs);
+    }
 }
 
 int main() {
@@ -174,7 +207,7 @@ int main() {
         return 1;
     }
 
-    int n, m, i, j, r, nqnt; // n-> variaveis, m-> restricoes
+    int n, m, i, j, r; // n-> variaveis, m-> restricoes
     // i, j-> iteracao, r->numero a ser lido
     leitor >> n >> m;
     int* C = new int[n]; // coeficientes
@@ -200,13 +233,33 @@ int main() {
 
     leitor.close();
 
+    int sol_totais=0, sol_val=0, sol_nval=0;
     vector<string> c = combinacoes(n,m);
-    pair<int, int> par;
-    par = phase1simplex(c[3],C,A,b,n,m);
-    /*int solt=0, solv=0, soln=0; // solucoes totais, solucoes validas, e nao validas
-    pair<int, int> par;
-    for (i=0; i<nqnt; i++) {
-    }*/
+    vector<int> solucoes;
+    pair<int, vector<int>> par;
+    for (auto i : c) {
+        par = phase1simplex(i,C,A,b,n,m);
+        if (par.first != 0) {
+            sol_totais++;
+            if (par.first == -1) {
+                sol_nval++;
+                cout << "z = " << par.second[n];
+                cout << " (inviavel)\n" << endl;
+            }
+            else {
+                sol_val++;
+                solucoes.push_back(par.second[n]);
+                cout << "z = " << par.second[n];
+                cout << " (viavel)\n" << endl;
+            }
+        }
+    }
+    cout << "Numero total de solucoes encontradas: " << sol_totais << endl;
+    cout << "Numero de solucoes basicas viaveis: " << sol_val << endl;
+    cout << "Numero de solucoes basicas inviaveis: " << sol_nval << endl;
+    if (!solucoes.empty()) {
+        sort(solucoes.begin(), solucoes.end());
+    }
 
     return 0;
 }
