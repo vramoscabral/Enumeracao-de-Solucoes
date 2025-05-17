@@ -118,7 +118,7 @@ int viable(vector<int> X) {
 }
 
 //função que calcula solução por solução (se houver)
-pair<int, vector<int>> phase1simplex(string comb, int* C, int**A, int* b, int n, int m) {
+pair<int, vector<int>> encontrarsolucao(string comb, int* C, int**A, int* b, int n, int m) {
     int* C_N = new int[n-m];
     int i=0, j, valor;
     stringstream ss(comb);
@@ -233,32 +233,41 @@ int main() {
 
     leitor.close();
 
-    int sol_totais=0, sol_val=0, sol_nval=0;
+    int sol_totais=0, sol_val=0, sol_nval=0, s;
     vector<string> c = combinacoes(n,m);
-    vector<int> solucoes;
+    vector<pair<int, vector<int>>> solucoes;
     pair<int, vector<int>> par;
     for (auto i : c) {
-        par = phase1simplex(i,C,A,b,n,m);
+        par = encontrarsolucao(i,C,A,b,n,m);
         if (par.first != 0) {
             sol_totais++;
             if (par.first == -1) {
                 sol_nval++;
                 cout << "z = " << par.second[n];
-                cout << " (inviavel)\n" << endl;
+                cout << ".0 (inviavel)\n" << endl;
             }
             else {
                 sol_val++;
-                solucoes.push_back(par.second[n]);
+                s = par.second[n];
+                solucoes.push_back(make_pair(s, par.second));
                 cout << "z = " << par.second[n];
-                cout << " (viavel)\n" << endl;
+                cout << ".0 (viavel)\n" << endl;
             }
         }
     }
     cout << "Numero total de solucoes encontradas: " << sol_totais << endl;
     cout << "Numero de solucoes basicas viaveis: " << sol_val << endl;
-    cout << "Numero de solucoes basicas inviaveis: " << sol_nval << endl;
+    cout << "Numero de solucoes basicas inviaveis: " << sol_nval << endl << endl;
     if (!solucoes.empty()) {
         sort(solucoes.begin(), solucoes.end());
+        cout << "Solucao otima encontrada!" << endl;
+        cout << "Funcao objetivo: " << solucoes[0].first << ".0" << endl;
+        cout << "x = [";
+        int os = solucoes[0].second.size()-1;
+        for (i=0; i<os; i++) {
+            if (i<os-1) cout << solucoes[0].second[i] << ", ";
+            else cout << solucoes[0].second[i] << "]\n";
+        }
     }
 
     return 0;
