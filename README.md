@@ -1,2 +1,2 @@
-# Implementacao-Metodo-Simplex
-Trabalho de implementação do Método Simplex para encontrar soluções, em C++.
+# Enumeracao-de-Solucoes
+Trabalho de implementação da Enumeração de Soluções para problemas de programação linear, em C++.
